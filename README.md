@@ -40,4 +40,4 @@ Historical FRAP+NFPORS (Dec 2017-June 2020)
 ```
 
 ## Publications
-Chung, K., T. Liu, M. Kelp, K. Vohra, D. Skelly, M.C. Carroll, J. Schwartz, and L.J. Mickley. Managing smoke risk from wildland fires: Northern California as a case study. (submitted to <i>Environ. Sci. Technol.</i>) Preprint DOI (EarthArXiv): https://doi.org/10.31223/X57M7F
+Chung, K., T. Liu, M. Kelp, K. Vohra, D. Skelly, M.C. Carroll, J. Schwartz, and L.J. Mickley (2025). Managing smoke risk from wildland fires: Northern California as a case study. <i>Environ. Sci. Technol.</i>, DOI: https://doi.org/10.1021/acs.est.5c01914
