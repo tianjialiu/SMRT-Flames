@@ -32,7 +32,7 @@ var inputPanel = function(receptor) {
   var infoLabel = ui.Label('SMRT-Flames estimates the population-weighted smoke risk from wildfires on a regional basis across the western U.S and explores the impact of hypothetical land management scenarios on reducing smoke risk.',
     {margin: '4px 20px 2px 8px', fontSize: '12px', color: '#777'});
   
-  var paperLabel = ui.Label('[Paper]', {textAlign: 'left', margin: '3px 5px 3px 8px', fontSize: '12.5px', color: '#5886E8'},'https://doi.org/10.31223/X57M7F');
+  var paperLabel = ui.Label('[Paper]', {textAlign: 'left', margin: '3px 5px 3px 8px', fontSize: '12.5px', color: '#5886E8'},'https://doi.org/10.1021/acs.est.5c01914');
   var codeLabel = ui.Label('[Code]', {textAlign: 'left', margin: '3px 5px 3px 3px', fontSize: '12.5px', color: '#5886E8'},'https://github.com/tianjialiu/SMRT-Flames');
   var linksPanel = ui.Panel(
     [paperLabel,codeLabel],
@@ -378,6 +378,7 @@ var legendPanel = function(legendPanelParent) {
       widgets: [
         ui.Label('Map Layers', {fontWeight: 'bold', fontSize: '20px', margin: '0px 0px 0px 8px'}),
         ui.Label('Note: Use the sliders associated with each legend to change the opacity of map layers.', {fontSize: '12px', margin: '4px 0px 0px 8px', color: '#999'}),
+        
         // Smoke risk layers
         ui.Label('Smoke Risk Index Layers', {margin: '10px 0px 6px 8px',
           fontSize: '18.5px', fontWeight: '100'}),
@@ -526,8 +527,8 @@ submitButton.onClick(function() {
   var sensitivityMap = params.getSensMap(metYear,receptor);
   var PMExposureMap = params.getPMmap(inEmiInvName,inputYear,metYear,receptor,zone);
   var emissMap = params.getEmissMap(inEmiInvName,inputYear);
- 
-  // ancilllary layers
+  
+  // ancillary layers
   var metMap = params.getMetMap(metYear,zone);
   var popDensityMap = params.getPopDensityMap(inputYear,zone);
   var lcMap = params.getLCMap(inputYear,zone);
@@ -541,6 +542,7 @@ submitButton.onClick(function() {
   var smokeRiskMap = params.getSmokeRiskIndexMap(inEmiInvName,savaBurned,temfBurned,
     fuelConsumption,inputYear,metYear,receptor,zone,customLM);
   var priorityBorders = params.getPriorityRiskImg(smokeRiskValsMap,lmGrid,inputYear);
+  var priorityBordersVec = params.getPriorityRiskVec(smokeRiskValsMap,lmGrid,inputYear);
   
   if (lmType == 'Targeted') {
     customLM = params.getLMscenario_targeted(inEmiInvName,lmInput,zone,smokeRiskVals);
@@ -556,6 +558,7 @@ submitButton.onClick(function() {
   var smokeRiskMap_customLM = params.getSmokeRiskIndexMap(inEmiInvName,savaBurned,temfBurned,
     fuelConsumption,inputYear,metYear,receptor,zone,customLM);
   var priorityBorders_customLM = params.getPriorityRiskImg(smokeRiskValsMap_customLM,lmGrid,inputYear);
+  var priorityBordersVec_customLM = params.getPriorityRiskVec(smokeRiskValsMap_customLM,lmGrid,inputYear);
   
   // land cover and recurrence factor
   var LCfracMap = params.getLCfracMap(inEmiInvName,inputYear,zone);
@@ -565,22 +568,22 @@ submitButton.onClick(function() {
   map.setCenter(-120,38,6);
   map.setControlVisibility({layerList: false});
   map.setOptions('ROADMAP', {'Silver': baseMap.silverTheme});
-
+  
   // Ancillary layers
-  map.addLayer(lcMap,
+  map.addLayer(lcMap.clip(zoneGeom),
     {palette:params.lcColRamp, min:1, max:9},
     'NLCD Land Cover', false, 0.75);
   
-  map.addLayer(popDensityMap, 
+  map.addLayer(popDensityMap.clip(zoneGeom), 
     {palette:params.popColRamp, max:200},
     'Population Density', false, 0.75);
   
-  map.addLayer(metMap, 
+  map.addLayer(metMap.clip(zoneGeom), 
     {palette:params.metColRamp, max:2500},
     'Vapor Pressure Deficit (Jul-Nov)', false, 0.75);
   
   // Historical fire layers
-  map.addLayer(PMExposureMap.multiply(100).selfMask(),
+  map.addLayer(PMExposureMap.multiply(100).selfMask().clip(zoneGeom),
     {palette:params.PMColRamp, max:20},
     'PM2.5 Exposure (Jul-Nov), scaled by 100', false);
     
@@ -589,33 +592,33 @@ submitButton.onClick(function() {
     'OC+BC Emissions (Jul-Nov)', false);
   
   // Smoke risk layers
-  map.addLayer(LCfracMap.select('A_SAVA').multiply(100), 
+  map.addLayer(LCfracMap.select('A_SAVA').multiply(100).clip(zoneGeom), 
     {palette: params.LCfracColRamp, min:0, max:100},
     'SAVA (fractional area)', false, 0.8);
   
-  map.addLayer(LCfracMap.select('A_TEMF').multiply(100),
+  map.addLayer(LCfracMap.select('A_TEMF').multiply(100).clip(zoneGeom),
     {palette: params.LCfracColRamp, min:0, max:100},
     'TEMF (fractional area)', false, 0.8);
     
   map.addLayer(RFMap.select('R_SAVA').multiply(100)
-    .updateMask(LCfracMap.select('A_SAVA').gt(0)), 
+    .updateMask(LCfracMap.select('A_SAVA').gt(0)).clip(zoneGeom), 
     {palette: params.RFColRamp, min:0, max:100},
     'SAVA recurrence interval', false, 0.8);
     
   map.addLayer(RFMap.select('R_TEMF').multiply(100)
-    .updateMask(LCfracMap.select('A_TEMF').gt(0)), 
+    .updateMask(LCfracMap.select('A_TEMF').gt(0)).clip(zoneGeom), 
     {palette: params.RFColRamp, min:0, max:100},
     'TEMF recurrence interval', false, 0.8);
     
-  map.addLayer(customLM,
+  map.addLayer(customLM.clip(zoneGeom),
     {palette:params.scenarioColRamp, min:0, max:1},
     'Custom Land Management Intensity',false,1);
   
-  map.addLayer(smokeRiskMap_customLM, 
+  map.addLayer(smokeRiskMap_customLM.clip(zoneGeom), 
     {palette: params.smokeRiskColRamp, min:1, max:7},
     'Smoke Risk Index w/ Custom LM', false, 0.8);
     
-  map.addLayer(smokeRiskMap, 
+  map.addLayer(smokeRiskMap.clip(zoneGeom), 
     {palette: params.smokeRiskColRamp, min:1, max:7},
     'Smoke Risk Index', true, 0.8);
   
@@ -631,7 +634,7 @@ submitButton.onClick(function() {
   
   map.addLayer(receptorBounds, {palette: ['#DCDCDC','black'], max:1},
     'GEOS-Chem Adjoint Boundaries', false);
-  
+
   // Display Charts:
   plotPanel.clear();
   var footDivider = ui.Panel(ui.Label(),ui.Panel.Layout.flow('horizontal'),
@@ -694,5 +697,3 @@ submitButton.onClick(function() {
   });
   
 });
-
-

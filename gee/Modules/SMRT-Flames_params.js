@@ -49,7 +49,11 @@ exports.eYear_adj = eYear_adj;
 var crsLatLon = 'EPSG:4326';
 var sens_gridRes = [0.3125,0,-130.15625,0,-0.25,60.125];
 var gfed_gridRes = [0.25,0,-180,0,-0.25,90];
-var adjBounds = ee.Geometry.Rectangle([-130.1562,9.625,-59.84375,60.125],'EPSG:4326',false);
+var adjBounds = ee.Geometry.Rectangle([-130.15625,9.625,-59.84375,60.125],'EPSG:4326',false);
+exports.crsLatLon = crsLatLon;
+exports.sens_gridRes = sens_gridRes;
+exports.gfed_gridRes = gfed_gridRes;
+exports.adjBounds = adjBounds;
 
 // Conversion factors
 var sf_adjoint = 24 * 6; // account for number of physical time steps in adjoint
@@ -503,8 +507,7 @@ var getMetMap = function(metYear, zone) {
       return VPD;
     });
     
-  return ee.ImageCollection(metMon).mean()
-    .clip(zoneGeom);
+  return ee.ImageCollection(metMon).mean();
 };
 exports.getMetMap = getMetMap;
 
@@ -528,7 +531,7 @@ var getPopDensityMap = function(inYear, zone) {
   })).sort('diff').first().getNumber('year');
   
   var popYr = GPWpop.filter(ee.Filter.calendarRange(popYrClosest,popYrClosest,'year'))
-    .first().clip(zoneGeom);
+    .first();
     
   return popYr;
 };
@@ -555,12 +558,12 @@ var getLCMap = function(inputYear, zone) {
     '+ (lc>=41 & lc<=43)*5 + (lc==52)*6 + (lc==71)*7' +
     '+ (lc>=81 & lc<=82)*8 + (lc>=90 & lc<=95)*9',
       {lc: landcover});
-  return landcover_filtered.clip(zoneGeom);
+  return landcover_filtered;
 };
 exports.getLCMap = getLCMap;
 
-exports.lcColRamp = ['#466b9f','#d1def8','#000000','#b3ac9f','#68ab5f',
-  '#ccb879','#dfdfc2','#ab6c28','#b8d9eb'];
+exports.lcColRamp = ['#466B9F','#D1DEF8','#000000','#B3AC9F','#68AB5F',
+  '#CCB879','#DFDFC2','#AB6C28','#B8D9EB'];
 exports.lcLabels = ['Water','Snow/Ice','Developed','Barren','Forest',
   'Shrub','Grassland','Cropland','Wetlands'];
 
@@ -576,8 +579,7 @@ var getLCfracMap = function(inEmiInvName, inputYear, zone) {
 
   return LCFire_yr.select(['A_SAVA','A_TEMF']).divide(gridArea)
     .updateMask(landAreas)
-    .reproject({crs: gridScale, scale: gridScale.nominalScale()})
-    .clip(zoneGeom);
+    .reproject({crs: gridScale, scale: gridScale.nominalScale()});
 };
 exports.getLCfracMap = getLCfracMap;
 exports.LCfracColRamp = ['#FFFFCC','#DCF0AE','#B7E194','#8DCF82',
@@ -594,8 +596,7 @@ var getRFMap = function(inEmiInvName, inputYear, zone) {
     .first();
   
   return LCFire_yr.select(['R_SAVA','R_TEMF']).updateMask(landAreas)
-    .reproject({crs: gridScale, scale: gridScale.nominalScale()})
-    .clip(zoneGeom);
+    .reproject({crs: gridScale, scale: gridScale.nominalScale()});
 };
 exports.getRFMap = getRFMap;
 exports.RFColRamp = ['#404040','#727272','#A7A09E','#E1C0B4',
@@ -629,8 +630,7 @@ var getLMscenario_variable = function(inEmiInvName, inputText, zone) {
   inputPtsImg = ee.Image(inputPtsImg);
   
   return ee.Image(1).subtract(inputPtsImg).updateMask(landAreas)
-    .reproject({crs: gridScale, scale: gridScale.nominalScale()})
-    .clip(zoneGeom);
+    .reproject({crs: gridScale, scale: gridScale.nominalScale()});
 };
 exports.getLMscenario_variable = getLMscenario_variable;
 
@@ -653,8 +653,7 @@ var getLMscenario_targeted = function(inEmiInvName, inputText, zone, smokeRiskVa
   gridCellsLMI = ee.Image(gridCellsLMI);
   
   return ee.Image(1).subtract(gridCellsLMI).updateMask(landAreas)
-    .reproject({crs: gridScale, scale: gridScale.nominalScale()})
-    .clip(zoneGeom);
+    .reproject({crs: gridScale, scale: gridScale.nominalScale()});
 };
 exports.getLMscenario_targeted = getLMscenario_targeted;
 
@@ -690,6 +689,15 @@ var getPriorityRiskImg = function(smokeRiskValsMap,lmGrid,inputYear) {
     .paint(priorityRisk, 0, 2);
 };
 exports.getPriorityRiskImg = getPriorityRiskImg;
+
+var getPriorityRiskVec = function(smokeRiskValsMap,lmGrid,inputYear) {
+  var smokeRiskVals = getSmokeRiskVals(smokeRiskValsMap,lmGrid,inputYear);
+  
+  // top 15 grid cells
+  var priorityRisk = getPriorityRisk(smokeRiskVals,15);
+  return priorityRisk;
+};
+exports.getPriorityRiskVec = getPriorityRiskVec;
 
 // ------------
 // SMOKE RISK
@@ -800,8 +808,7 @@ var getSmokeRiskValsMap = function(inEmiInvName,savaBurned,temfBurned,
     savaBurned,temfBurned, 
     fuelConsumption,inputYear,metYear,zone,inSens)
       .multiply(customLM)
-      .reproject({crs: gridScale, scale: gridScale.nominalScale()})
-      .clip(zoneGeom);
+      .reproject({crs: gridScale, scale: gridScale.nominalScale()});
 
   return smokeRiskValsMap;
 };
@@ -850,18 +857,17 @@ var getSmokeRiskIndexMap = function(inEmiInvName,savaBurned,temfBurned,
   
   // fill in land areas with low risk, edges of zone
   // and force smoke value contribution = 0 to be low risk
-  return smokeRiskMap.unmask(1).toInt().updateMask(landAreas)
-    .clip(zoneGeom);
+  return smokeRiskMap.unmask(1).toInt().updateMask(landAreas);
 };
 exports.getSmokeRiskIndexMap = getSmokeRiskIndexMap;
 
 exports.smokeRiskIndexLabels = ['7 (Extreme)','6','5 (High)','4','3 (Moderate)','2','1 (Low)'];
 
-exports.smokeRiskColRamp = ['#FFFFFF','#ead1dc', 
+exports.smokeRiskColRamp = ['#FFFFFF','#EAD1DC', 
   '#FBC127','#F67D15','#D44842','#65146E','#000000'];
   
 exports.smokeRiskColRampRev = ['#000000','#65146E',
-  '#D44842','#F67D15','#FBC127','#ead1dc','#FFFFFF'];
+  '#D44842','#F67D15','#FBC127','#EAD1DC','#FFFFFF'];
 
 exports.scenarioColRamp = ['#000000','#252525','#525252','#737373','#969696',
   '#BDBDBD','#D9D9D9','#F0F0F0'];

@@ -1,7 +1,7 @@
 # SMRT-Flames
 SMRT-Flames: Smoke Management and Risk Tool with Fire-Land-Atmosphere Mapped Scenarios
 
-[SMRT-Flames](https://smoke-policy-tool.projects.earthengine.app/view/smrt-flames) quantifies the "smoke risk" of historical and potential wildland fire emissions in the western United States on population-weighted exposure and allows end-users to explores the impact of hypothetical land management scenarios on reducing smoke risk. The smoke risk index is based on a flexible framework that includes fire history and activity, emissions factors, atmospheric transport, and land cover. SMRT-Flames allows land managers to prioritize prescribed burns and fuel treatments to minimize the long-term population smoke burden. See our [preprint](https://doi.org/10.31223/X57M7F) for more information.
+[SMRT-Flames](https://smoke-policy-tool.projects.earthengine.app/view/smrt-flames) quantifies the "smoke risk" of historical and potential wildland fire emissions in the western United States on population-weighted exposure and allows end-users to explores the impact of hypothetical land management scenarios on reducing smoke risk. The smoke risk index is based on a flexible framework that includes fire history and activity, emissions factors, atmospheric transport, and land cover. SMRT-Flames allows land managers to prioritize prescribed burns and fuel treatments to minimize the long-term population smoke burden. See our [ES&T paper](https://doi.org/10.1021/acs.est.5c01914) for more information.
 
 ![banner image](https://github.com/tianjialiu/SMRT-Flames/blob/main/docs/imgs/SMRT-Flames.png)
 
